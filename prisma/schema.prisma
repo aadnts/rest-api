@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+//The database should be considered as a module, as it will be used by other modules
+//To build this database module, we will use the Prisma ORM
+//To use Prisma we need to have 2 libraries installed : 
+//The @prisma/client library will allow us to create our schema and run migrations, deploy migrations - It is more of a Maintenance library
+//To install prisma with yarn type : yarn add -D prisma
+//The -D signifies that we will add the librabry as a development package
+//The prisma client for javascript will allow us to interact with the database - It is more of a runtime library
+//To install prisma client : yarn add prisma@client
+//To initialize prisma CLI run : npx prisma init
+//Once initialized prisma will generate a .env file for the environment variables with a postgres connection string by default
+//It also generates a prisma folder with a schema file inside it, which is where we will declare our models
+
+//When you use a library like TYPE ORM : you'll have to create entities and place them inside your logic
+//For prisma you only handle your models from one place, the schema file, a bit like graphql
+
+//Here is says that prisma will use the prisma-client-js library to generate the client
+generator client {
+  provider = "prisma-client-js"
+}
+
+//The provider will be postgres but you can have any other database provider like mysql, mongodb, etc
+//The url will be the connection string to the database, it's going to grab it from the first environment file that it finds
+//So if you place one inside the prisma folder it'll use that one
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//To create a model, type model and the name of the model
+model User {
+  //FieldName DataType SpecialAttribute Logic
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  email String @unique
+  hash  String
+
+  //? defines an optional field
+  firstName String?
+  lastName  String?
+
+  bookmarks Bookmark[]
+
+  //This @@map will allow us to change the name of the table in the database
+  @@map("users")
+}
+
+model Bookmark {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  title       String
+  description String?
+  link        String
+
+  //This is a relation between the user and the bookmark
+  userId Int
+  //Fields parameter references primary key of the model and we use references to indicate to prisma which variable this primary key is referencing
+  user   User @relation(fields: [userId], references: [id])
+
+  @@map("bookmarks")
+}
+
+//npx prisma migrate dev COMMAND will read the schema and generate the migrations in that folder
+//This command will : create sql files, pushes the schema/sql to the database
+
+//npx prisma generate COMMAND will read the schema and creates typescript types/interfaces/classes for your schema
+//With this command, you don't need to do anything else, you can start using the models in your code just by importing import { User, Bookmark } from '@prisma/client';
+
+//npx prisma studio COMMAND will open a GUI to interact with your database
+
+//to access postgres from the terminal 
+//If the db is running on docker : docker exec -it <container_id> bash
+//psql -U <user_name> <db_name>
+//to see tables use \dt and \d <table_name> to see the table schema and \d to see the schema of the table you are in
